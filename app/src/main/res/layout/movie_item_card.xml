@@ -1,0 +1,32 @@
+<!-- A CardView that contains a TextView -->
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_margin="1dp"
+    android:id="@+id/movie_poster_card"
+    android:elevation="8dp"
+    android:layout_gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:contentDescription="@string/movie_poster_description"
+        android:id="@+id/movie_poster"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType = "centerCrop"
+        tools:src="@drawable/poster_load_failure"/>
+
+    <TextView
+        android:id="@+id/movie_poster_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Movie Title"
+        android:layout_gravity="bottom"
+        android:alpha="0.9"
+        android:padding="4dp"
+        android:textColor="@color/primary_light"
+        android:background="@color/primary_dark" />
+
+</android.support.v7.widget.CardView>

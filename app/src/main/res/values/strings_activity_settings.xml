@@ -1,0 +1,25 @@
+<resources>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">General</string>
+    <string name="pref_header_general_summary">Customize your application experience</string>
+
+    <string name="pref_grid_columns_default">2</string>
+    <string name="pref_grid_columns_name" translatable="false">grid_columns</string>
+
+    <string name="pref_movie_sort_default">popularity.desc</string>
+    <string name="pref_movie_sort_key" translatable="false">movie_sorting</string>
+    <string name="pref_movie_sort_label">Sort Order</string>
+    <string-array name="pref_movie_sort_entries_label">
+        <item>Most Popular</item>
+        <item>Highest Rated</item>
+    </string-array>
+    <string-array name="pref_movie_sort_entries_values">
+        <item>popularity.desc</item>
+        <item>vote_average.desc</item>
+    </string-array>
+
+</resources>

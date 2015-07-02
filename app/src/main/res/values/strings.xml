@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="movie_poster_description">Movie Poster</string>
+
+    <string name="action_settings">Settings</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_movie_detail">Movie Detail</string>
+
+</resources>
