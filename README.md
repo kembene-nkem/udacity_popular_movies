@@ -1,1 +1,3 @@
-# udacity_popular_movies
+# Udacity Popular Movies (pt1)
+
+*By Kembene Nkem-etoh*
