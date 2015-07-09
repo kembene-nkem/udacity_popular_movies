@@ -150,6 +150,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     private void __movieItemClicked(View view, int position){
         Movie movie = mAdapter.getMovieAtPosition(position);
+        //this is done just to initialise the releaseDateFormatted value which is used by our Parcelable
+        // implementation to store the release date
+        movie.getReleaseDateFormatted(getActivity());
         if(movie != null){
             mListener.onFragmentMovieSelected(movie);
         }

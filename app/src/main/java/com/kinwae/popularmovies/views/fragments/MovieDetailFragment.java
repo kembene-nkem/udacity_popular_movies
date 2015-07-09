@@ -64,9 +64,9 @@ public class MovieDetailFragment extends Fragment {
         ImageView imageView = (ImageView)inflate.findViewById(R.id.movie_detail_poster);
         textView.setText(mMovie.getOriginalTitle());
         loadImageIntoView(imageView, mMovie);
-        ratingView.setText(Double.toString(mMovie.getRating()));
-        dateView.setText(mMovie.getReleaseDate());
-        plotView.setText(mMovie.getPlotSynopsis());
+        ratingView.setText(Double.toString(mMovie.getVoteAverage()));
+        dateView.setText(mMovie.getReleaseDateFormatted(getActivity()));
+        plotView.setText(mMovie.getOverview());
 
         return inflate;
     }

@@ -6,18 +6,23 @@ import java.util.List;
  * Created by Kembene on 6/27/2015.
  */
 public class MovieRequestResponse {
-    List<Movie> movies;
+    List<Movie> results;
     int page;
-    int numberOfPages;
+    int totalPages;
 
     public List<Movie> getMovies() {
-        return movies;
+        return results;
     }
 
-    public MovieRequestResponse setMovies(List<Movie> movies) {
-        this.movies = movies;
+    public List<Movie> getResults() {
+        return results;
+    }
+
+    public MovieRequestResponse setResults(List<Movie> results) {
+        this.results = results;
         return this;
     }
+
 
     public int getPage() {
         return page;
@@ -28,12 +33,12 @@ public class MovieRequestResponse {
         return this;
     }
 
-    public int getNumberOfPages() {
-        return numberOfPages;
+    public int getTotalPages() {
+        return totalPages;
     }
 
-    public MovieRequestResponse setNumberOfPages(int numberOfPages) {
-        this.numberOfPages = numberOfPages;
+    public MovieRequestResponse setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
         return this;
     }
 }

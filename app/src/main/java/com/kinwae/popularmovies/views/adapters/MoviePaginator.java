@@ -1,15 +1,27 @@
 package com.kinwae.popularmovies.views.adapters;
 
-import android.net.Uri;
+import android.util.Log;
 
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.internal.bind.DateTypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.data.MovieRequestResponse;
-import com.kinwae.popularmovies.net.NetworkRequest;
-import com.kinwae.popularmovies.net.NetworkResponse;
-import com.kinwae.popularmovies.net.reader.MovieListDecoder;
+import com.kinwae.popularmovies.services.MovieService;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import retrofit.RequestInterceptor;
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.converter.GsonConverter;
 
 /**
  * A pagenator is responsible for doing the actual loading of movies for a particular page. It either makes
@@ -17,22 +29,46 @@ import java.util.List;
  * Created by Kembene on 6/27/2015.
  */
 public class MoviePaginator {
+
+    public static final String API_KEY = "54d33209a6e7e146aad6b7ce16875a32";
+
+    public static final String BASE_URL = "http://api.themoviedb.org/3";
+
+    private String LOGGER = MoviePaginator.class.getName();
+
     private int numberOfPages = 1;
-    //don't know if we can set the number if items to retrieve from themoviedb, but by default,
+    //don't know if we can set the number of items to retrieve from themoviedb, but by default,
     // they return 20 items
     private int itemsPerPage = 20;
 
-    protected static MovieListDecoder movieListDecoder;
 
     private int mMaxCacheSize = 5;
 
-    ArrayList<MovieRequestResponse> mCache = new ArrayList<>();
+    private ArrayList<MovieRequestResponse> mCache = new ArrayList<>();
 
+    private RequestInterceptor mRequestInterceptor = new RequestInterceptor() {
+        @Override
+        public void intercept(RequestInterceptor.RequestFacade request) {
+            request.addQueryParam("api_key", API_KEY);
+            request.addHeader("User-Agent", "Retrofit-Sample-App");
+        }
+    };
+
+    private MovieService mMovieService;
 
     public MoviePaginator() {
-        if(movieListDecoder == null){
-            movieListDecoder = new MovieListDecoder();
-        }
+        Gson gson = new GsonBuilder()
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                .setDateFormat(Movie.DATE_FORMAT)
+                .create();
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(BASE_URL)
+                .setConverter(new GsonConverter(gson))
+                .setRequestInterceptor(mRequestInterceptor)
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .build();
+        mMovieService = restAdapter.create(MovieService.class);
+
     }
 
     /**
@@ -52,7 +88,7 @@ public class MoviePaginator {
         }
         if(decodeResponse == null){
             //We don't have a cache of this response, so lets request it
-            Uri.Builder uriBuilder = NetworkRequest.RequestBuilder.discoveryUri(sortOrder);
+            /*Uri.Builder uriBuilder = NetworkRequest.RequestBuilder.discoveryUri(sortOrder);
             // page number is zero based, but themoviedb is 1 based
             uriBuilder.appendQueryParameter("page", Integer.toString(page));
             Uri uri = uriBuilder.build();
@@ -61,6 +97,12 @@ public class MoviePaginator {
             if(movieResponse.isSuccessful()){
                 decodeResponse = movieListDecoder.decodeResponse(movieResponse);
                 this.numberOfPages = decodeResponse.getNumberOfPages();
+            }*/
+            try{
+                decodeResponse = mMovieService.getMovies(sortOrder, page);
+            }
+            catch(RetrofitError ex){
+                Log.v(LOGGER, ex.getMessage());
             }
 
             if(decodeResponse != null){
