@@ -1,0 +1,3 @@
+<resources>
+    <string name="pref_grid_columns_default">2</string>
+</resources>

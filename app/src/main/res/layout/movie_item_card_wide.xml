@@ -8,13 +8,13 @@
     android:elevation="8dp"
     android:layout_gravity="center"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <ImageView
         android:contentDescription="@string/movie_poster_description"
         android:id="@+id/movie_poster"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="300dp"
         android:scaleType = "centerCrop"
         tools:src="@drawable/poster_load_failure"/>
 

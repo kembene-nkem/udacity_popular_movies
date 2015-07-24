@@ -6,26 +6,33 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
+import com.facebook.stetho.Stetho;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.util.Utility;
 import com.kinwae.popularmovies.views.adapters.MovieListPagerAdapter;
 import com.kinwae.popularmovies.views.adapters.MoviePaginator;
+import com.kinwae.popularmovies.views.fragments.MovieDetailFragment;
 import com.kinwae.popularmovies.views.fragments.MovieListFragment;
 import com.kinwae.popularmovies.views.managers.DefaultMovieListManager;
+
+import retrofit.RetrofitError;
 
 public class MainActivity extends AppCompatActivity
         implements MovieListFragment.OnFragmentInteractionListener,
         DefaultMovieListManager.MovieListManagerHolder{
 
     private final static String BUNDLE_NAME_ADAPTER_ITEM_COUNT = "adap_ite_cnt";
+    private final static String LOG_TAG = MainActivity.class.getName();
 
-    String LOG_TAG = MainActivity.class.getName();
     private MovieListPagerAdapter mPagerAdapter;
     private ViewPager mPager;
     private MoviePaginator moviePaginator;
     private DefaultMovieListManager mListManager;
     private String mCurrentSorting;
+    private boolean mTwoPane;
+    private static String DETAIL_FRAGMENT_TAG = "DETAIL_FRAG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +43,7 @@ public class MainActivity extends AppCompatActivity
         moviePaginator = new MoviePaginator();
         mListManager = new DefaultMovieListManager(this, moviePaginator, mPagerAdapter);
         int adapterPageCount = 1;
+        View detailContainer = findViewById(R.id.movie_detail_container);
 
         if(savedInstanceState != null){
             mListManager.setPageCountUpdated(true);
@@ -43,7 +51,7 @@ public class MainActivity extends AppCompatActivity
                 adapterPageCount = savedInstanceState.getInt(BUNDLE_NAME_ADAPTER_ITEM_COUNT);
             }
         }
-        //we have to set the pageCount on the adapter before we set the adapter on the mPager else
+        // we have to set the pageCount on the adapter before we set the adapter on the mPager else
         // we could get an exception telling us that we changed the pageCount without calling
         // notifyDatasetChanged
         mPagerAdapter.setPageCount(adapterPageCount);
@@ -52,13 +60,24 @@ public class MainActivity extends AppCompatActivity
         mCurrentSorting = Utility.getPreferredMovieSortOrder(this);
 
         //todo provide integration to chrome debugger. Remove on production
-        /*Stetho.initialize(
+        Stetho.initialize(
                 Stetho.newInitializerBuilder(this)
                         .enableDumpapp(
                                 Stetho.defaultDumperPluginsProvider(this))
                         .enableWebKitInspector(
                                 Stetho.defaultInspectorModulesProvider(this))
-                        .build());*/
+                        .build());
+
+        if(detailContainer != null){
+            mTwoPane = true;
+            MovieDetailFragment detailFragment = MovieDetailFragment.newInstance(null);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.movie_detail_container,detailFragment,DETAIL_FRAGMENT_TAG)
+                    .commit();
+        }
+        else{
+            mTwoPane = false;
+        }
 
     }
 
@@ -80,6 +99,8 @@ public class MainActivity extends AppCompatActivity
                 mPagerAdapter.notifyDataSetChanged();
             }
         }
+
+
     }
 
     @Override
@@ -127,14 +148,17 @@ public class MainActivity extends AppCompatActivity
     }
 
     protected void showMovieDetails(Movie movie){
-        Intent intent = new Intent(this, MovieDetailActivity.class);
+        if(mTwoPane){
+            MovieDetailFragment detailFragment = MovieDetailFragment.newInstance(movie);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.movie_detail_container,detailFragment,DETAIL_FRAGMENT_TAG)
+                    .commit();
+        }
+        else{
+            Intent intent = new Intent(this, MovieDetailActivity.class);
 
-        intent.putExtra(MovieDetailActivity.BUNDLE_EXTRA_NAME, movie);
-        startActivity(intent);
-        /*MovieDetailFragment movieDetailFragment = MovieDetailFragment.newInstance(movie);
-        getFragmentManager().beginTransaction()
-                .replace(R.id.movie_detail_container, movieDetailFragment)
-                .addToBackStack(null)
-                .commit();*/
+            intent.putExtra(MovieDetailActivity.BUNDLE_EXTRA_NAME, movie);
+            startActivity(intent);
+        }
     }
 }

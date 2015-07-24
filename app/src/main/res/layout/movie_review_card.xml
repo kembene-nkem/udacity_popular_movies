@@ -1,0 +1,44 @@
+<!-- A CardView that contains a TextView -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_margin="1dp"
+    android:id="@+id/movie_review_card"
+    android:layout_gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/icons"
+    android:elevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/movie_review_text_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Movie Title"
+            android:layout_gravity="bottom"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="4dp"
+            android:paddingTop="4dp"
+            android:textSize="16sp"
+            android:textColor="@color/primary_text"/>
+        <TextView
+            android:id="@+id/movie_review_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Movie Title"
+            android:layout_gravity="bottom"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="4dp"
+            android:paddingTop="4dp"
+            android:textSize="14sp"
+            android:textColor="@color/secondary_text"/>
+    </LinearLayout>
+
+</FrameLayout>

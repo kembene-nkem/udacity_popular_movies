@@ -16,7 +16,7 @@ import android.widget.ImageView;
 
 import com.kinwae.popularmovies.R;
 import com.kinwae.popularmovies.data.Movie;
-import com.kinwae.popularmovies.loaders.MovieListLoader;
+import com.kinwae.popularmovies.loaders.MovieListNetworkLoader;
 import com.kinwae.popularmovies.util.Utility;
 import com.kinwae.popularmovies.views.adapters.MovieListAdapter;
 import com.kinwae.popularmovies.views.bus.RecyclerViewPosterClickListener;
@@ -29,7 +29,7 @@ import java.util.List;
  * A placeholder fragment containing a simple view.
  */
 public class MovieListFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Movie>> {
-    //http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=54d33209a6e7e146aad6b7ce16875a32
+
     private final static String LOG_TAG = MovieListFragment.class.getName();
     public static final String MOVIE_FRAGMENT_PAGER_BUNDLE_NAME = "frag_page";
     public final static int MOVIE_LIST_LOADER_ID = 0;
@@ -40,8 +40,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     private OnFragmentInteractionListener mListener;
 
     private MovieListAdapter mAdapter;
-    private GridLayoutManager mLayoutManager;
-    private MovieListLoader mMovieLoader;
+    private MovieListNetworkLoader mMovieLoader;
 
     private int mPagerPosition = -1;
     private int mShortAnimationDuration;
@@ -99,7 +98,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
         int colCount = Utility.getPreferredGridColumns(getActivity());
 
-        mLayoutManager = new GridLayoutManager(getActivity(), colCount);
+        GridLayoutManager mLayoutManager = new GridLayoutManager(getActivity(), colCount);
         mAdapter = new MovieListAdapter(new ArrayList<Movie>());
 
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -130,7 +129,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
             mListener = (OnFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
-                    + " must implement OnMovieSelectedListener");
+                    + " must implement OnFragmentInteractionListener");
         }
     }
 
@@ -147,13 +146,13 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         super.onSaveInstanceState(outState);
     }
 
-
     private void __movieItemClicked(View view, int position){
         Movie movie = mAdapter.getMovieAtPosition(position);
-        //this is done just to initialise the releaseDateFormatted value which is used by our Parcelable
-        // implementation to store the release date
-        movie.getReleaseDateFormatted(getActivity());
+
         if(movie != null){
+            //this is done just to initialise the releaseDateFormatted value which is used by our Parcelable
+            // implementation to store the release date
+            movie.getReleaseDateFormatted(getActivity());
             mListener.onFragmentMovieSelected(movie);
         }
     }
@@ -162,7 +161,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     public android.support.v4.content.Loader<List<Movie>> onCreateLoader(int id, Bundle args) {
         //we only create a loader when we have a page to work with
         if(mPagerPosition >= 0){
-            mMovieLoader = new MovieListLoader(getActivity(), mPagerPosition, null);
+            mMovieLoader = new MovieListNetworkLoader(getActivity(), mPagerPosition, null);
             // Ask the our custom ListManager to bind our loader
             FragmentActivity activity = getActivity();
             if(activity instanceof DefaultMovieListManager.MovieListManagerHolder){
@@ -182,12 +181,12 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
             //data has finished loading, lets update our adapter
             mAdapter.updateMovies(data);
             if(getActivity() instanceof DefaultMovieListManager.MovieListManagerHolder
-                    && loader instanceof MovieListLoader){
+                    && loader instanceof MovieListNetworkLoader){
                 // our Loader has finished loading and now has content to be displayed,
                 // lets inform our MovieListManager of this.
                 ((DefaultMovieListManager.MovieListManagerHolder)getActivity())
                         .getMovieListManager()
-                        .paginatorLoadComplete((MovieListLoader) loader);
+                        .paginatorLoadComplete((MovieListNetworkLoader) loader);
             }
             crossfade(mRecyclerView, mLoadingView, mNoConnectionView);
         }

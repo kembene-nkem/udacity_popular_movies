@@ -1,24 +1,22 @@
 package com.kinwae.popularmovies.views.managers;
 
 import android.content.Context;
-import android.database.DataSetObservable;
 import android.database.DataSetObserver;
 
-import com.kinwae.popularmovies.loaders.MovieListLoader;
+import com.kinwae.popularmovies.events.MovieListRefreshRequiredEvent;
+import com.kinwae.popularmovies.loaders.MovieListNetworkLoader;
+import com.kinwae.popularmovies.util.Utility;
 import com.kinwae.popularmovies.views.adapters.MovieListPagerAdapter;
 import com.kinwae.popularmovies.views.adapters.MoviePaginator;
-import com.kinwae.popularmovies.views.bus.MovieListManager;
-import com.kinwae.popularmovies.views.bus.MovieListManagerAware;
 import com.kinwae.popularmovies.views.bus.MoviePaginatorLoadMonitor;
 
 /**
  * Created by Kembene on 6/27/2015.
  */
-public class DefaultMovieListManager implements MoviePaginatorLoadMonitor, MovieListManager {
+public class DefaultMovieListManager implements MoviePaginatorLoadMonitor {
     private MovieListPagerAdapter mPagerAdapter;
     private MoviePaginator moviePaginator;
     private boolean pageCountUpdated = false;
-    private MoviePagerAndLoaderBridgeObservable mDatasetObservable;
     private boolean mNotifyTriggeredByManager = false;
 
     //an observer that will listen for dataset changes on the PagerAdapter
@@ -33,47 +31,35 @@ public class DefaultMovieListManager implements MoviePaginatorLoadMonitor, Movie
             moviePaginator.resetCache();
             //notify all Loaders that a configuration change has been made thus they need to
             // reload their view
-            mDatasetObservable.notifyChanged();
+            Utility.getSharedEventBus().post(new MovieListRefreshRequiredEvent());
         }
 
         @Override
         public void onInvalidated() {
-            mDatasetObservable.notifyInvalidated();
+            //mDatasetObservable.notifyInvalidated();
         }
     };
 
     public DefaultMovieListManager(Context context, MoviePaginator paginator, MovieListPagerAdapter pagerAdapter) {
         this.moviePaginator = paginator;
         this.mPagerAdapter = pagerAdapter;
-        this.mDatasetObservable = new MoviePagerAndLoaderBridgeObservable();
         this.mPagerAdapter.registerDataSetObserver(mPagerObserver);
     }
 
-    public void cleanUp(){
-        this.mPagerAdapter.unregisterDataSetObserver(mPagerObserver);
-    }
-
-    public void registerChangeObserver(DataSetObserver observer){
-        mDatasetObservable.registerObserver(observer);
-    }
-
-    public void unregisterChangeObserver(DataSetObserver observer){
-        mDatasetObservable.unregisterObserver(observer);
-    }
-
-    public MoviePaginator getMoviePaginator() {
-        return moviePaginator;
-    }
-
-    public MovieListPagerAdapter getPagerAdapter() {
-        return mPagerAdapter;
+    public void swapAdapter(MovieListPagerAdapter adapter){
+        if(this.mPagerAdapter != null)
+            this.mPagerAdapter.unregisterDataSetObserver(mPagerObserver);
+        this.mPagerAdapter = adapter;
+        if(this.mPagerAdapter != null){
+            this.mPagerAdapter.registerDataSetObserver(mPagerObserver);
+        }
     }
 
     @Override
     /**
      * This loader has successfully loaded the data from the Paginator we gave to it
      */
-    public void paginatorLoadComplete(MovieListLoader loader) {
+    public void paginatorLoadComplete(MovieListNetworkLoader loader) {
         // We do not know before hand now many pages there are to be loaded, not until an initial
         // request is made to themoviedb. So when the first loader returns we want change the number
         // of pages reported by the PagerAdapter and trigger a datasetChanged event.
@@ -83,7 +69,7 @@ public class DefaultMovieListManager implements MoviePaginatorLoadMonitor, Movie
         // (MainActivity#onStart) to prevent this particular notificationChange from hitting the
         // loaders again, we set a #mNotifyTriggeredByManager flag. If that flag is true, we do not
         // notify the registered Loaders of the changes that has just occured
-        synchronized (this.moviePaginator){
+        synchronized (this){
             if(!pageCountUpdated){
                 mPagerAdapter.setPageCount(moviePaginator.getNumberOfPages());
                 this.mNotifyTriggeredByManager = true;
@@ -105,36 +91,13 @@ public class DefaultMovieListManager implements MoviePaginatorLoadMonitor, Movie
      * Ok! Our fragment has just created its loader, it wants me to attach to it the paginator it will
      * be using to get data
      */
-    public void bindLoader(MovieListLoader loader) {
+    public void bindLoader(MovieListNetworkLoader loader) {
         loader.setMoviePaginator(moviePaginator);
-        if(loader instanceof MovieListManagerAware){
-            ((MovieListManagerAware)loader).setMovieListManager(this);
-        }
     }
 
 
     public interface MovieListManagerHolder{
         DefaultMovieListManager getMovieListManager();
-    }
-
-    public static class MoviePagerAndLoaderBridgeObservable extends DataSetObservable{}
-
-    public static abstract class PagerAndLoaderBridgeObserver extends DataSetObserver{
-        private MovieListManager listManager;
-
-        public PagerAndLoaderBridgeObserver(MovieListManager listManager) {
-            this.listManager = listManager;
-        }
-
-        public void startObserving(){
-            if(this.listManager != null)
-                this.listManager.registerChangeObserver(this);
-        }
-
-        public void stopObserving(){
-            if(this.listManager != null)
-                this.listManager.unregisterChangeObserver(this);
-        }
     }
 
 }

@@ -1,0 +1,24 @@
+<!-- A CardView that contains a TextView -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_margin="1dp"
+    android:id="@+id/movie_review_card"
+    android:layout_gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/icons"
+    android:elevation="0dp">
+
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Movie Title"
+        android:layout_gravity="center"
+        android:padding="16dp"
+        android:textSize="24sp"
+        android:textColor="@color/primary"/>
+
+</FrameLayout>

@@ -1,27 +1,31 @@
 package com.kinwae.popularmovies.views.fragments;
 
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.kinwae.popularmovies.MovieDetailActivity;
 import com.kinwae.popularmovies.R;
 import com.kinwae.popularmovies.data.Movie;
-import com.kinwae.popularmovies.util.ImageSize;
 import com.kinwae.popularmovies.util.Utility;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.RequestCreator;
+import com.kinwae.popularmovies.views.adapters.MovieDetailAdapter;
 
 public class MovieDetailFragment extends Fragment {
 
     public static final String ARG_MOVIE = "movie_detail_movie";
 
     private Movie mMovie;
+    private MovieDetailAdapter mAdapter;
+    RecyclerView mRecyclerView;
 
 
     /**
@@ -46,9 +50,9 @@ public class MovieDetailFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //mMovie = getActivity().getIntent().getParcelableExtra(MovieDetailActivity.BUNDLE_EXTRA_NAME);
         if (getArguments() != null) {
             mMovie = getArguments().getParcelable(ARG_MOVIE);
-
         }
     }
 
@@ -57,37 +61,23 @@ public class MovieDetailFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View inflate = inflater.inflate(R.layout.fragment_movie_detail, container, false);
-        TextView textView = (TextView)inflate.findViewById(R.id.movie_detail_title);
-        TextView ratingView = (TextView)inflate.findViewById(R.id.movie_detail_vote_rate);
-        TextView dateView = (TextView)inflate.findViewById(R.id.movie_detail_date);
-        TextView plotView = (TextView)inflate.findViewById(R.id.movie_detail_plot);
-        ImageView imageView = (ImageView)inflate.findViewById(R.id.movie_detail_poster);
-        textView.setText(mMovie.getOriginalTitle());
-        loadImageIntoView(imageView, mMovie);
-        ratingView.setText(Double.toString(mMovie.getVoteAverage()));
-        dateView.setText(mMovie.getReleaseDateFormatted(getActivity()));
-        plotView.setText(mMovie.getOverview());
 
-        return inflate;
-    }
+        GridLayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 1);
 
-    private void loadImageIntoView(ImageView imageView, Movie movie){
-        RequestCreator picassoCreator = null;
-        if(movie.getPosterPath() == null){
-            picassoCreator = Picasso.with(getActivity())
-                    .load(R.drawable.poster_placeholder);
+        if(mMovie != null){
+            mAdapter = new MovieDetailAdapter(mMovie);
         }
         else{
-            String posterURL = Utility.getPosterURL(ImageSize.DEFAULT, movie.getPosterPath());
-
-            picassoCreator = Picasso.with(getActivity())
-                    .load(posterURL);
+            mAdapter = new MovieDetailAdapter(null);
         }
-        picassoCreator
-                .placeholder(R.drawable.poster_placeholder)
-                .error(R.drawable.poster_placeholder)
-                        //.centerCrop()
-                .into(imageView);
+
+        mRecyclerView = (RecyclerView)inflate.findViewById(R.id.movie_details_listing_wrapper);
+        if(mRecyclerView != null){
+            mRecyclerView.setLayoutManager(mLayoutManager);
+            mRecyclerView.setAdapter(mAdapter);
+        }
+        
+        return inflate;
     }
 
 }

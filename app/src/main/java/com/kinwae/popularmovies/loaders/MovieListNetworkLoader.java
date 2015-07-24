@@ -4,11 +4,11 @@ import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
 
 import com.kinwae.popularmovies.data.Movie;
+import com.kinwae.popularmovies.events.MovieListRefreshRequiredEvent;
 import com.kinwae.popularmovies.util.Utility;
 import com.kinwae.popularmovies.views.adapters.MoviePaginator;
 import com.kinwae.popularmovies.views.bus.MovieListManager;
-import com.kinwae.popularmovies.views.bus.MovieListManagerAware;
-import com.kinwae.popularmovies.views.managers.DefaultMovieListManager;
+import com.squareup.otto.Subscribe;
 
 import java.util.List;
 
@@ -23,26 +23,24 @@ import java.util.List;
  * lifespan of the activity itself) so they get associated with a paginator via the DefaultMovieListManager
  * Created by Kembene on 6/27/2015.
  */
-public class MovieListLoader extends AsyncTaskLoader<List<Movie>> implements MovieListManagerAware{
+public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
 
     List<Movie> mMovieList;
-    //We no longer need this observer here at the loader level, instead we should monitor
-    //for preference changes at the Activity level and notify the PagerAdapter of data set changes
-    protected DefaultMovieListManager.PagerAndLoaderBridgeObserver mObserver;
+    UpdateListObserver mObserver;
     int mPagerPosition;
     MoviePaginator mMoviePaginator;
     MovieListManager mMovieListManager;
 
 
-    public MovieListLoader(Context context, MoviePaginator mMoviePaginator) {
+    public MovieListNetworkLoader(Context context, MoviePaginator mMoviePaginator) {
         this(context, 1, mMoviePaginator);
     }
 
-    public MovieListLoader(Context context, int pageNumber, MoviePaginator mMoviePaginator) {
+    public MovieListNetworkLoader(Context context, int pageNumber, MoviePaginator mMoviePaginator) {
         this(context, pageNumber, mMoviePaginator, null);
     }
 
-    public MovieListLoader(Context context, int page, MoviePaginator mMoviePaginator, List<Movie> movies) {
+    public MovieListNetworkLoader(Context context, int page, MoviePaginator mMoviePaginator, List<Movie> movies) {
         super(context);
         this.mMovieList = movies;
         this.mPagerPosition = page;
@@ -53,7 +51,7 @@ public class MovieListLoader extends AsyncTaskLoader<List<Movie>> implements Mov
         this.mMovieListManager = movieListManager;
     }
 
-    public MovieListLoader setMoviePaginator(MoviePaginator moviePaginator) {
+    public MovieListNetworkLoader setMoviePaginator(MoviePaginator moviePaginator) {
         this.mMoviePaginator = moviePaginator;
         return this;
     }
@@ -116,8 +114,8 @@ public class MovieListLoader extends AsyncTaskLoader<List<Movie>> implements Mov
 
         // start watching for changes made on shared preferences
         if(mObserver == null){
-            this.mObserver = new Observer(mMovieListManager, this);
-            this.mObserver.startObserving();
+            mObserver = new UpdateListObserver();
+            mObserver.startObserving();
         }
 
         // if movielist is null or if content has changed (in our case, setting preference has changed)
@@ -171,22 +169,20 @@ public class MovieListLoader extends AsyncTaskLoader<List<Movie>> implements Mov
         // like a Cursor, we would close it here.
     }
 
-    class Observer extends DefaultMovieListManager.PagerAndLoaderBridgeObserver{
-        private AsyncTaskLoader listLoader;
+    class UpdateListObserver{
 
-        public Observer(MovieListManager listManager, MovieListLoader listLoader) {
-            super(listManager);
-            this.listLoader = listLoader;
+        @Subscribe
+        public void movieListRequiredEvent(MovieListRefreshRequiredEvent event){
+            onContentChanged();
         }
 
-        @Override
-        public void onChanged() {
-            listLoader.onContentChanged();
+        void startObserving(){
+            Utility.getSharedEventBus().register(this);
         }
 
-        @Override
-        public void onInvalidated() {
-            listLoader = null;
+        void stopObserving(){
+            Utility.getSharedEventBus().unregister(this);
         }
     }
+
 }

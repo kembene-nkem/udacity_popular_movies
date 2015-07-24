@@ -2,29 +2,45 @@ package com.kinwae.popularmovies.views.adapters;
 
 import android.util.Log;
 
+import com.facebook.stetho.okhttp.StethoInterceptor;
+import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
 import com.google.gson.internal.bind.DateTypeAdapter;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.data.MovieRequestResponse;
+import com.kinwae.popularmovies.events.MovieDetailLoadedEvent;
+import com.kinwae.popularmovies.net.NetworkRequest;
 import com.kinwae.popularmovies.services.MovieService;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
+import retrofit.client.OkClient;
 import retrofit.converter.GsonConverter;
 
 /**
- * A pagenator is responsible for doing the actual loading of movies for a particular page. It either makes
+ * A paginator is responsible for doing the actual loading of movies for a particular page. It either makes
  * network calls or returns a cached record set. Paginators caches result for at most five(5) pages
  * Created by Kembene on 6/27/2015.
  */
@@ -46,28 +62,8 @@ public class MoviePaginator {
 
     private ArrayList<MovieRequestResponse> mCache = new ArrayList<>();
 
-    private RequestInterceptor mRequestInterceptor = new RequestInterceptor() {
-        @Override
-        public void intercept(RequestInterceptor.RequestFacade request) {
-            request.addQueryParam("api_key", API_KEY);
-            request.addHeader("User-Agent", "Retrofit-Sample-App");
-        }
-    };
-
-    private MovieService mMovieService;
-
     public MoviePaginator() {
-        Gson gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .setDateFormat(Movie.DATE_FORMAT)
-                .create();
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(BASE_URL)
-                .setConverter(new GsonConverter(gson))
-                .setRequestInterceptor(mRequestInterceptor)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
-                .build();
-        mMovieService = restAdapter.create(MovieService.class);
+
 
     }
 
@@ -88,21 +84,14 @@ public class MoviePaginator {
         }
         if(decodeResponse == null){
             //We don't have a cache of this response, so lets request it
-            /*Uri.Builder uriBuilder = NetworkRequest.RequestBuilder.discoveryUri(sortOrder);
-            // page number is zero based, but themoviedb is 1 based
-            uriBuilder.appendQueryParameter("page", Integer.toString(page));
-            Uri uri = uriBuilder.build();
-            NetworkRequest networkRequest = NetworkRequest.RequestBuilder.sharedInstance();
-            NetworkResponse movieResponse = networkRequest.<List<Movie>>execute(uri);
-            if(movieResponse.isSuccessful()){
-                decodeResponse = movieListDecoder.decodeResponse(movieResponse);
-                this.numberOfPages = decodeResponse.getNumberOfPages();
-            }*/
             try{
-                decodeResponse = mMovieService.getMovies(sortOrder, page);
+                //We don't have a cache of this response, so lets request it
+                decodeResponse = NetworkRequest.getRestService().getMovies(sortOrder, page);
+                this.numberOfPages = decodeResponse.getTotalPages();
             }
             catch(RetrofitError ex){
                 Log.v(LOGGER, ex.getMessage());
+                ex.printStackTrace();
             }
 
             if(decodeResponse != null){
@@ -136,4 +125,6 @@ public class MoviePaginator {
     public int getItemsPerPage() {
         return itemsPerPage;
     }
+
+
 }

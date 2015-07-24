@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="layout" name="activity_main">@layout/activity_main_wide</item>
+    <item type="layout" name="movie_detail_card">@layout/movie_detail_card_wide</item>
+    <item type="layout" name="movie_item_card">@layout/movie_item_card_wide</item>
+</resources>

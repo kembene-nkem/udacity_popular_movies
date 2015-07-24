@@ -4,12 +4,17 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
+        <provider
+            android:authorities="com.kinwae.popular_movies"
+            android:name=".data.provider.MyContractProvider"
+            android:exported="false"/>
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -38,6 +43,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.kinwae.popularmovies.MainActivity" />
         </activity>
+
     </application>
 
 </manifest>
