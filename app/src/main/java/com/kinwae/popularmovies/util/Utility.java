@@ -1,13 +1,19 @@
 package com.kinwae.popularmovies.util;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.kinwae.popularmovies.R;
 import com.kinwae.popularmovies.data.Movie;
+import com.kinwae.popularmovies.events.MovieFavoritedEvent;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieColumns;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieContentValues;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieSelection;
 import com.squareup.otto.Bus;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.RequestCreator;
@@ -68,7 +74,23 @@ public class Utility {
         else{
             button.setImageResource(R.drawable.ic_star_off);
         }
-        mMovie.setFavorited(favorited);
+        if (favorited != mMovie.isFavorited()){
+            mMovie.setFavorited(favorited);
+            getSharedEventBus().post(new MovieFavoritedEvent(favorited, mMovie));
+            Context context = button.getContext();
+            ContentResolver contentResolver = context.getContentResolver();
+            if(favorited){
+                DbMovieContentValues values = new DbMovieContentValues(mMovie);
+                Uri insert = contentResolver.insert(DbMovieColumns.CONTENT_URI, values.values());
+            }
+            else{
+                DbMovieSelection dbselection = new DbMovieSelection();
+                String movieId = Long.toString(mMovie.getId());
+                String selection = dbselection.movieId(movieId).sel();
+                contentResolver.delete(DbMovieColumns.CONTENT_URI, selection, new String[]{movieId});
+            }
+        }
+
     }
 
     public static Bus getSharedEventBus(){

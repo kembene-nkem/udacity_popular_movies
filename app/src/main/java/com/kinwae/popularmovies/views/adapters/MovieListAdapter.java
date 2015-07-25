@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.kinwae.popularmovies.R;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.events.MovieDetailLoadedEvent;
+import com.kinwae.popularmovies.events.MovieFavoritedEvent;
 import com.kinwae.popularmovies.util.ImageSize;
 import com.kinwae.popularmovies.util.Utility;
 import com.squareup.otto.Subscribe;
@@ -121,6 +122,17 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.View
         }
     }
 
+    @Subscribe
+    public void movieWasFavoritedListener(MovieFavoritedEvent event){
+        Movie movie = event.getMovie();
+        if(movie != null){
+            Integer mIndex = movieIndexes.get(movie.getId());
+            if(mIndex != null){
+                Movie movieAtPosition = getMovieAtPosition(mIndex);
+                movieAtPosition.setFavorited(movie.isFavorited());
+            }
+        }
+    }
 
     @Subscribe
     public void movieDetailLoadedEventListener(MovieDetailLoadedEvent event){

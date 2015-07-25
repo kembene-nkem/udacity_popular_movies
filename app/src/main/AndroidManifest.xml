@@ -11,8 +11,8 @@
         android:theme="@style/AppTheme" >
 
         <provider
-            android:authorities="com.kinwae.popular_movies"
-            android:name=".data.provider.MyContractProvider"
+            android:authorities="com.kinwae.popularmovies"
+            android:name=".provider.PopularMovieProvider"
             android:exported="false"/>
 
         <activity

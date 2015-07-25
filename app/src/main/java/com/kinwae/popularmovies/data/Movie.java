@@ -26,6 +26,10 @@ import retrofit.client.Response;
  * Created by Kembene on 6/24/2015.
  */
 public class Movie implements Parcelable {
+    /**
+     * DB id column
+     */
+    private long _id;
     private long id;
     private String title;
     private String originalTitle;
@@ -65,6 +69,15 @@ public class Movie implements Parcelable {
             return new Movie[size];
         }
     };
+
+    public long get_id() {
+        return _id;
+    }
+
+    public Movie set_id(long _id) {
+        this._id = _id;
+        return this;
+    }
 
     public long getId() {
         return id;
