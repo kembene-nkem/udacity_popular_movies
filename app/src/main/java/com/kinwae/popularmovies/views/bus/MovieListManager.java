@@ -1,8 +1,6 @@
 package com.kinwae.popularmovies.views.bus;
 
-import android.database.DataSetObserver;
-
-import com.kinwae.popularmovies.views.adapters.MovieListPagerAdapter;
+import com.kinwae.popularmovies.views.adapters.MoviePagerAdapter;
 import com.kinwae.popularmovies.views.adapters.MoviePaginator;
 
 /**
@@ -10,5 +8,5 @@ import com.kinwae.popularmovies.views.adapters.MoviePaginator;
  */
 public interface MovieListManager {
     MoviePaginator getMoviePaginator();
-    MovieListPagerAdapter getPagerAdapter();
+    MoviePagerAdapter getPagerAdapter();
 }

@@ -11,13 +11,13 @@ import com.kinwae.popularmovies.views.fragments.MovieListFragment;
  * A ViewPager adapter that will be used by the viewpager of an activity
  * Created by Kembene on 6/27/2015.
  */
-public class MovieListPagerAdapter extends FragmentStatePagerAdapter {
+public class MoviePagerAdapter extends FragmentStatePagerAdapter {
 
 
 
     private int pageCount = 1;
 
-    public MovieListPagerAdapter(FragmentManager fm) {
+    public MoviePagerAdapter(FragmentManager fm) {
         super(fm);
     }
 
@@ -32,7 +32,7 @@ public class MovieListPagerAdapter extends FragmentStatePagerAdapter {
         return pageCount;
     }
 
-    public MovieListPagerAdapter setPageCount(int pageCount) {
+    public MoviePagerAdapter setPageCount(int pageCount) {
         this.pageCount = pageCount;
         return this;
     }

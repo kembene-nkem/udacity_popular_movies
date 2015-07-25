@@ -11,13 +11,11 @@ import android.view.View;
 import com.facebook.stetho.Stetho;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.util.Utility;
-import com.kinwae.popularmovies.views.adapters.MovieListPagerAdapter;
+import com.kinwae.popularmovies.views.adapters.MoviePagerAdapter;
 import com.kinwae.popularmovies.views.adapters.MoviePaginator;
 import com.kinwae.popularmovies.views.fragments.MovieDetailFragment;
 import com.kinwae.popularmovies.views.fragments.MovieListFragment;
 import com.kinwae.popularmovies.views.managers.DefaultMovieListManager;
-
-import retrofit.RetrofitError;
 
 public class MainActivity extends AppCompatActivity
         implements MovieListFragment.OnFragmentInteractionListener,
@@ -26,7 +24,7 @@ public class MainActivity extends AppCompatActivity
     private final static String BUNDLE_NAME_ADAPTER_ITEM_COUNT = "adap_ite_cnt";
     private final static String LOG_TAG = MainActivity.class.getName();
 
-    private MovieListPagerAdapter mPagerAdapter;
+    private MoviePagerAdapter mPagerAdapter;
     private ViewPager mPager;
     private MoviePaginator moviePaginator;
     private DefaultMovieListManager mListManager;
@@ -39,7 +37,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mPagerAdapter = new MovieListPagerAdapter(getSupportFragmentManager());
+        mPagerAdapter = new MoviePagerAdapter(getSupportFragmentManager());
         moviePaginator = new MoviePaginator();
         mListManager = new DefaultMovieListManager(this, moviePaginator, mPagerAdapter);
         int adapterPageCount = 1;

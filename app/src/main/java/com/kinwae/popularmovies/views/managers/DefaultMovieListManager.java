@@ -6,7 +6,7 @@ import android.database.DataSetObserver;
 import com.kinwae.popularmovies.events.MovieListRefreshRequiredEvent;
 import com.kinwae.popularmovies.loaders.MovieListNetworkLoader;
 import com.kinwae.popularmovies.util.Utility;
-import com.kinwae.popularmovies.views.adapters.MovieListPagerAdapter;
+import com.kinwae.popularmovies.views.adapters.MoviePagerAdapter;
 import com.kinwae.popularmovies.views.adapters.MoviePaginator;
 import com.kinwae.popularmovies.views.bus.MoviePaginatorLoadMonitor;
 
@@ -14,7 +14,7 @@ import com.kinwae.popularmovies.views.bus.MoviePaginatorLoadMonitor;
  * Created by Kembene on 6/27/2015.
  */
 public class DefaultMovieListManager implements MoviePaginatorLoadMonitor {
-    private MovieListPagerAdapter mPagerAdapter;
+    private MoviePagerAdapter mPagerAdapter;
     private MoviePaginator moviePaginator;
     private boolean pageCountUpdated = false;
     private boolean mNotifyTriggeredByManager = false;
@@ -40,13 +40,13 @@ public class DefaultMovieListManager implements MoviePaginatorLoadMonitor {
         }
     };
 
-    public DefaultMovieListManager(Context context, MoviePaginator paginator, MovieListPagerAdapter pagerAdapter) {
+    public DefaultMovieListManager(Context context, MoviePaginator paginator, MoviePagerAdapter pagerAdapter) {
         this.moviePaginator = paginator;
         this.mPagerAdapter = pagerAdapter;
         this.mPagerAdapter.registerDataSetObserver(mPagerObserver);
     }
 
-    public void swapAdapter(MovieListPagerAdapter adapter){
+    public void swapAdapter(MoviePagerAdapter adapter){
         if(this.mPagerAdapter != null)
             this.mPagerAdapter.unregisterDataSetObserver(mPagerObserver);
         this.mPagerAdapter = adapter;
