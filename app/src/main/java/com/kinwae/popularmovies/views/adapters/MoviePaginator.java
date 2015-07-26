@@ -46,10 +46,6 @@ import retrofit.converter.GsonConverter;
  */
 public class MoviePaginator {
 
-    public static final String API_KEY = "54d33209a6e7e146aad6b7ce16875a32";
-
-    public static final String BASE_URL = "http://api.themoviedb.org/3";
-
     private String LOGGER = MoviePaginator.class.getName();
 
     private int numberOfPages = 1;

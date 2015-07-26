@@ -29,7 +29,6 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
     UpdateListObserver mObserver;
     int mPagerPosition;
     MoviePaginator mMoviePaginator;
-    MovieListManager mMovieListManager;
 
 
     public MovieListNetworkLoader(Context context, MoviePaginator mMoviePaginator) {
@@ -45,10 +44,6 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
         this.mMovieList = movies;
         this.mPagerPosition = page;
         this.mMoviePaginator = mMoviePaginator;
-    }
-
-    public void setMovieListManager(MovieListManager movieListManager){
-        this.mMovieListManager = movieListManager;
     }
 
     public MovieListNetworkLoader setMoviePaginator(MoviePaginator moviePaginator) {
