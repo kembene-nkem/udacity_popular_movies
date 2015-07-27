@@ -32,5 +32,4 @@ dependencies {
     //compile 'com.facebook.stetho:stetho:1.1.1'
     //compile 'com.facebook.stetho:stetho-okhttp:1.1.1'
     compile 'com.android.support:support-v4:22.2.0'
-    compile 'com.github.provigen:ProviGen-lib:2.0.1'
 }
