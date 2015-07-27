@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.kinwae.popularmovies.data.MovieReview;
 import com.kinwae.popularmovies.provider.base.AbstractCursor;
 
 /**
@@ -64,5 +65,10 @@ public class DbReviewCursor extends AbstractCursor implements DbReviewModel {
     public String getReviewId() {
         String res = getStringOrNull(DbReviewColumns.REVIEW_ID);
         return res;
+    }
+
+    public MovieReview getMovieReview(){
+        MovieReview review = new MovieReview(getReviewer(), getReview());
+        return review;
     }
 }

@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -17,23 +17,25 @@ import android.widget.ImageView;
 
 import com.kinwae.popularmovies.R;
 import com.kinwae.popularmovies.data.Movie;
+import com.kinwae.popularmovies.events.MovieLoaderLoadCompleteEvent;
+import com.kinwae.popularmovies.loaders.FavouritedMovieLoader;
 import com.kinwae.popularmovies.loaders.MovieListNetworkLoader;
+import com.kinwae.popularmovies.loaders.MovieLoaderDataProvider;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieSelection;
 import com.kinwae.popularmovies.util.Utility;
 import com.kinwae.popularmovies.views.adapters.MovieListAdapter;
 import com.kinwae.popularmovies.views.bus.RecyclerViewPosterClickListener;
-import com.kinwae.popularmovies.views.managers.DefaultMovieListManager;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MovieListFragment extends Fragment implements LoaderManager.LoaderCallbacks<List<Movie>> {
+public class MovieListFragment extends Fragment implements LoaderManager.LoaderCallbacks<MovieLoaderDataProvider> {
 
     private final static String LOG_TAG = MovieListFragment.class.getName();
     public static final String MOVIE_FRAGMENT_PAGER_BUNDLE_NAME = "frag_page";
-    public final static int MOVIE_LIST_LOADER_ID = 0;
+    public final static int NETWORK_MOVIE_LIST_LOADER_ID = 0;
+    public final static int CURSOR_MOVIE_LIST_LOADER_ID = 1;
+    private int mLastLoaderId = -1;
 
     private RecyclerView mRecyclerView;
     private View mLoadingView;
@@ -41,10 +43,11 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     private OnFragmentInteractionListener mListener;
 
     private MovieListAdapter mAdapter;
-    private MovieListNetworkLoader mMovieLoader;
+    private Loader<MovieLoaderDataProvider> mMovieLoader;
 
     private int mPagerPosition = -1;
     private int mShortAnimationDuration;
+
 
 
     public static MovieListFragment newInstance(int pagerPosition) {
@@ -68,7 +71,19 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         this.mNoConnectionView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(mLastLoaderId == CURSOR_MOVIE_LIST_LOADER_ID){
+                    mNoConnectionView.setImageResource(R.drawable.no_data);
+                }
+                else{
+                    mNoConnectionView.setImageResource(R.drawable.no_network);
+                }
+                // no need to re-request for content if we are on data that is loaded from the
+                // database
+                if(mLastLoaderId == CURSOR_MOVIE_LIST_LOADER_ID){
+                    return;
+                }
                 crossfade(mLoadingView, mNoConnectionView, mRecyclerView);
+
                 if(mMovieLoader != null){
                     //Loader has been initialized, inform the loader that it should reload its
                     // content
@@ -81,8 +96,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         });
 
 
-        mShortAnimationDuration = getResources().getInteger(
-                android.R.integer.config_shortAnimTime);
+        mShortAnimationDuration = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
         this.mRecyclerView.setVisibility(View.GONE);
         this.mNoConnectionView.setVisibility(View.GONE);
@@ -100,7 +114,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         int colCount = Utility.getPreferredGridColumns(getActivity());
 
         GridLayoutManager mLayoutManager = new GridLayoutManager(getActivity(), colCount);
-        mAdapter = new MovieListAdapter(new ArrayList<Movie>());
+        mAdapter = new MovieListAdapter(null);
 
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
@@ -122,7 +136,15 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        getLoaderManager().initLoader(MOVIE_LIST_LOADER_ID, null, this);
+        int sortCategory = Utility.getSortCategory(getActivity(), null);
+        int loaderId;
+        if(sortCategory == Utility.SORT_CATEGORY_NETWORK){
+            loaderId = NETWORK_MOVIE_LIST_LOADER_ID;
+        }
+        else{
+            loaderId = CURSOR_MOVIE_LIST_LOADER_ID;
+        }
+        getLoaderManager().initLoader(loaderId, null, this);
 
         // This makes sure that the container activity has implemented
         // the callback interface. If not, it throws an exception
@@ -159,36 +181,41 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public android.support.v4.content.Loader<List<Movie>> onCreateLoader(int id, Bundle args) {
+    public android.support.v4.content.Loader<MovieLoaderDataProvider> onCreateLoader(int id, Bundle args) {
         //we only create a loader when we have a page to work with
         if(mPagerPosition >= 0){
-            mMovieLoader = new MovieListNetworkLoader(getActivity(), mPagerPosition, null);
-            // Ask the our custom ListManager to bind our loader
-            FragmentActivity activity = getActivity();
-            if(activity instanceof DefaultMovieListManager.MovieListManagerHolder){
-                ((DefaultMovieListManager.MovieListManagerHolder)activity)
-                        .getMovieListManager()
-                        .bindLoader(mMovieLoader);
+            if(mMovieLoader != null){
+                mAdapter.updateDataProvider(null);
             }
+            // depending on the category of the data we want to load (network fetched or
+            // database fetched), create the appropriate loader
+            if(id == NETWORK_MOVIE_LIST_LOADER_ID){
+                mMovieLoader = new MovieListNetworkLoader(getActivity(), mPagerPosition);
+            }
+            else{
+                DbMovieSelection selection = new DbMovieSelection();
+                mMovieLoader = new FavouritedMovieLoader(getActivity(), selection);
+            }
+            mLastLoaderId = id;
             return mMovieLoader;
         }
         return null;
     }
 
     @Override
-    public void onLoadFinished(android.support.v4.content.Loader<List<Movie>> loader, List<Movie> data) {
-
-        if(data != null && data.size() > 0){
+    public void onLoadFinished(android.support.v4.content.Loader<MovieLoaderDataProvider> loader,
+                               MovieLoaderDataProvider data) {
+        if(mLastLoaderId == CURSOR_MOVIE_LIST_LOADER_ID){
+            mNoConnectionView.setImageResource(R.drawable.no_data);
+        }
+        else{
+            mNoConnectionView.setImageResource(R.drawable.no_network);
+        }
+        if(data != null && data.getItemsCount() > 0){
             //data has finished loading, lets update our adapter
-            mAdapter.updateMovies(data);
-            if(getActivity() instanceof DefaultMovieListManager.MovieListManagerHolder
-                    && loader instanceof MovieListNetworkLoader){
-                // our Loader has finished loading and now has content to be displayed,
-                // lets inform our MovieListManager of this.
-                ((DefaultMovieListManager.MovieListManagerHolder)getActivity())
-                        .getMovieListManager()
-                        .paginatorLoadComplete((MovieListNetworkLoader) loader);
-            }
+            mAdapter.updateDataProvider(data);
+            MovieLoaderLoadCompleteEvent event = new MovieLoaderLoadCompleteEvent(data);
+            Utility.getSharedEventBus().post(event);
             crossfade(mRecyclerView, mLoadingView, mNoConnectionView);
         }
         else{
@@ -198,8 +225,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public void onLoaderReset(android.support.v4.content.Loader<List<Movie>> loader) {
-        mAdapter.updateMovies(null);
+    public void onLoaderReset(android.support.v4.content.Loader<MovieLoaderDataProvider> loader) {
+        if(loader.getId() == mLastLoaderId)
+            mAdapter.updateDataProvider(null);
     }
 
     /**
@@ -249,6 +277,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
                 });
 
     }
+
 
     /**
      * This interface must be implemented by activities that contain this

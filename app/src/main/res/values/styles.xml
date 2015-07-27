@@ -24,4 +24,8 @@
     <style name="SettingsTheme" parent="AppTheme">
     </style>
 
+    <style name="TrailerItemListStyle">
+        <item name="android:choiceMode">singleChoice</item>
+    </style>
+
 </resources>

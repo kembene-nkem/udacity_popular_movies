@@ -28,39 +28,33 @@ import java.util.List;
 public class MovieDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     List<MovieReview> reviewList = new ArrayList<>();
-    List<Trailer> trailerList = new ArrayList<>();
     private Movie mMovie;
 
     private MovieReview noReview = new MovieReview("", "No Reviews");
-    private Trailer noTrailer = new Trailer("No Trailers", null);
 
     private final int HEADER_VIEW = 0;
     private final int REVIEWS_VIEW = 1;
-    private final int TRAILERS_VIEW = 2;
 
     private final int REVIEWS_TITLE_VIEW = 3;
-    private final int TRAILER_TITLE_VIEW = 4;
 
-    private PlayTrailerClickListener trailerPlayListener;
-
-    public MovieDetailAdapter(Movie movie) {
+    public MovieDetailAdapter(Movie movie, Context context) {
         this.mMovie = movie;
-        this.trailerPlayListener = new PlayTrailerClickListener();
-        Log.i(MovieDetailAdapter.class.getName(), "Trailers: "+movie.getTrailers());
-        getMovieDetails();
+        getMovieDetails(context);
     }
 
-    public void getMovieDetails(){
+    private void getMovieDetails(Context context){
         if(this.mMovie != null){
-            this.mMovie.loadMovieDetails(new Movie.MovieDetailLoadCallback() {
+
+            Movie.MovieDetailLoadCallback movieDetailLoadCallback = new Movie.MovieDetailLoadCallback() {
                 @Override
                 public void movieDetailsLoaded(Movie movie) {
                     // by this time, the movie's trailer and review list has already been updated
                     reviewList = movie.getReviews();
-                    trailerList = movie.getTrailers();
                     MovieDetailAdapter.this.notifyDataSetChanged();
                 }
-            });
+            };
+
+            this.mMovie.loadMovieDetails(movieDetailLoadCallback, context);
         }
     }
 
@@ -80,14 +74,6 @@ public class MovieDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 View reviewTitle = LayoutInflater.from(context)
                         .inflate(R.layout.movie_detail_title_card, parent, false);
                 return new TitleViewHolder(reviewTitle);
-            case TRAILER_TITLE_VIEW:
-                View trailerTitle = LayoutInflater.from(context)
-                        .inflate(R.layout.movie_detail_title_card, parent, false);
-                return new TitleViewHolder(trailerTitle);
-            case TRAILERS_VIEW:
-                View trailer = LayoutInflater.from(context)
-                        .inflate(R.layout.movie_trailer_card, parent, false);
-                return new TrailersViewHolder(trailer);
         }
         return null;
     }
@@ -103,17 +89,14 @@ public class MovieDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 MovieReview review = getReviewAtPosition(position);
                 ((ReviewsViewHolder)holder).reviewTextTitle.setText(review.getAuthor());
                 ((ReviewsViewHolder)holder).reviewText.setText(review.getContent());
+                if(position == getItemCount() - 1){
+                    TextView reviewText = ((ReviewsViewHolder) holder).reviewText;
+                    reviewText.setPadding(reviewText.getPaddingLeft(), reviewText.getPaddingTop(),
+                            reviewText.getPaddingRight(), 40);
+                }
                 break;
             case REVIEWS_TITLE_VIEW:
                 ((TitleViewHolder)holder).titleView.setText(R.string.movie_review_listing_title);
-                break;
-            case TRAILER_TITLE_VIEW:
-                ((TitleViewHolder)holder).titleView.setText(R.string.movie_trailer_listing_title);
-                break;
-            case TRAILERS_VIEW:
-                Trailer trailer = getTrailerAtPosition(position);
-                TrailersViewHolder trailersViewHolder = (TrailersViewHolder) holder;
-                trailersViewHolder.initView(trailer);
                 break;
         }
     }
@@ -123,30 +106,18 @@ public class MovieDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (mMovie == null)
             return 0;
         int reviewCount = reviewList.size();
-        int trailerCount = trailerList.size();
 
         if (reviewCount == 0){
             reviewCount = 1;
         }
 
-        if (trailerCount == 0){
-            trailerCount = 1;
-        }
-
-        //the 3 there represent item for the detail, review title and trailer title
-        return reviewCount + trailerCount + 3;
+        return reviewCount + 2;
     }
 
     @Override
     public int getItemViewType(int position) {
         if(position == 0){
             return HEADER_VIEW;
-        }
-        else if(isWithinTrailerHeader(position)){
-            return TRAILER_TITLE_VIEW;
-        }
-        else if(isWithinTrailersList(position)) {
-            return TRAILERS_VIEW;
         }
         else if(isReviewHeader(position)){
             return REVIEWS_TITLE_VIEW;
@@ -163,37 +134,15 @@ public class MovieDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (reviewList.size() == 0){
             return noReview;
         }
-        return reviewList.get(position - (getTrailerListCount() + 3));
-    }
-
-    private Trailer getTrailerAtPosition(int position){
-        if (trailerList.size() == 0){
-            return noTrailer;
-        }
-        return trailerList.get(position - 2);
+        return reviewList.get(position - 2);
     }
 
     private boolean isWithinReviewsList(int position){
-        return position > getTrailerListCount() + 3;
+        return position > 1 && position < getReviewListCount() + 2;
     }
 
     private boolean isReviewHeader(int position){
-        return position == getTrailerListCount() + 2;
-    }
-
-    private boolean isWithinTrailerHeader(int position){
         return position == 1;
-    }
-
-    private boolean isWithinTrailersList(int position){
-        return position > 1 && position < getTrailerListCount() + 2;
-    }
-
-    private int getTrailerListCount(){
-        if(trailerList.size() == 0){
-            return 1;
-        }
-        return trailerList.size();
     }
 
     private int getReviewListCount(){
@@ -243,10 +192,10 @@ public class MovieDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         }
                         Boolean oldState = tagState;
                         tagState = !tagState;
-                        Utility.setFavoritedStatus(tagState, button, movie);
+                        Utility.setFavoritedStatus(tagState, button, movie, true);
                     }
                 });
-                Utility.setFavoritedStatus(mMovie.isFavorited(), imageButton, movie);
+                Utility.setFavoritedStatus(mMovie.isFavorited(), imageButton, movie, false);
             }
         }
     }
@@ -266,55 +215,6 @@ public class MovieDetailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         public TitleViewHolder(View itemView) {
             super(itemView);
             titleView = (TextView)itemView.findViewById(R.id.title_text);
-        }
-    }
-
-    class TrailersViewHolder extends RecyclerView.ViewHolder{
-        private TextView titleView;
-        private ImageButton playButton;
-        public TrailersViewHolder(View itemView) {
-            super(itemView);
-            titleView = (TextView)itemView.findViewById(R.id.title_text);
-            playButton = (ImageButton)itemView.findViewById(R.id.play_trailer_button);
-            playButton.setOnClickListener(trailerPlayListener);
-        }
-
-        public void initView(Trailer trailer) {
-            if (trailer != null) {
-                titleView.setText(trailer.getName());
-                if(trailer.getSource() == null){
-                    playButton.setVisibility(View.GONE);
-                }
-                else{
-                    playButton.setVisibility(View.VISIBLE);
-                }
-                // since we do not have access
-                playButton.setTag(trailer);
-            }
-        }
-    }
-
-    private static class PlayTrailerClickListener implements View.OnClickListener{
-
-        @Override
-        public void onClick(View v) {
-            Object tag = v.getTag();
-            if(tag != null){
-                Trailer trailer = (Trailer)tag;
-                if(trailer.getSource() != null){
-                    // if a youtube or an equivalent app is installed, use it
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + trailer.getSource()));
-                    try{
-                        v.getContext().startActivity(intent);
-                    }
-                    catch (ActivityNotFoundException ex){
-                        // youtube or equivalent app not installed, fallback to browser
-                        intent=new Intent(Intent.ACTION_VIEW,
-                                Uri.parse("http://www.youtube.com/watch?v="+trailer.getSource()));
-                        v.getContext().startActivity(intent);
-                    }
-                }
-            }
         }
     }
 }

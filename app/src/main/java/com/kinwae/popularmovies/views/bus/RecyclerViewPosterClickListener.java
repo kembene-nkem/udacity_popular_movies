@@ -33,8 +33,13 @@ public class RecyclerViewPosterClickListener implements RecyclerView.OnItemTouch
         boolean isSingleTap = mGestureDetector.onTouchEvent(e);
         if(mListener != null && isSingleTap) {
             View childView = view.findChildViewUnder(e.getX(), e.getY());
-            mListener.onItemClick(view.getChildViewHolder(childView).getAdapterPosition(), childView);
-            return true;
+            if(childView != null){
+                RecyclerView.ViewHolder childViewHolder = view.getChildViewHolder(childView);
+                if(childViewHolder != null){
+                    mListener.onItemClick(childViewHolder.getAdapterPosition(), childView);
+                    return true;
+                }
+            }
         }
         return false;
     }

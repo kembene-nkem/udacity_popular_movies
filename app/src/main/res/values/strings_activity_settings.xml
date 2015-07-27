@@ -13,13 +13,24 @@
     <string name="pref_movie_sort_default">popularity.desc</string>
     <string name="pref_movie_sort_key" translatable="false">movie_sorting</string>
     <string name="pref_movie_sort_label">Sort Order</string>
+    <string name="pref_movies_per_page">20</string>
     <string-array name="pref_movie_sort_entries_label">
+        <item>My Favorite</item>
         <item>Most Popular</item>
         <item>Highest Rated</item>
     </string-array>
     <string-array name="pref_movie_sort_entries_values">
+        <item>favorited</item>
         <item>popularity.desc</item>
         <item>vote_average.desc</item>
     </string-array>
+
+    <string name="pref_sort_type_popularity">popularity.desc</string>
+    <string name="pref_sort_type_vote">vote_average.desc</string>
+    <string name="pref_sort_type_favorited">favorited</string>
+
+    <string name="label_sort_type_popularity_desc">Most Popular Movies</string>
+    <string name="label_sort_type_vote_average_desc">Highest Rated Movies</string>
+    <string name="label_sort_type_favorited">My Favorite Movies</string>
 
 </resources>

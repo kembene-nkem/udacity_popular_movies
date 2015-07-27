@@ -97,25 +97,29 @@ public class DbMovieCursor extends AbstractCursor implements DbMovieModel {
         return res;
     }
 
+    public Movie getMovie(){
+        Movie movie = new Movie();
+        movie.set_id(this.getId());
+        movie.setId(Long.valueOf(this.getMovieId()));
+        //only favourited movies are in the database
+        movie.setFavorited(true);
+        movie.setOriginalTitle(this.getOriginalTitle());
+        movie.setOverview(this.getOverview());
+        movie.setPosterPath(this.getPosterPath());
+        movie.setTitle(this.getTitle());
+        double vote_average = 0.0;
+        String voteAverage = this.getVoteAverage();
+        if(voteAverage != null && voteAverage.trim().length() > 0){
+            vote_average = Double.valueOf(voteAverage);
+        }
+        movie.setVoteAverage(vote_average);
+        movie.setReleaseDate(this.getReleaseDate());
+        return movie;
+    }
+
     public Movie nextMovie(){
         if(this.moveToNext()){
-            Movie movie = new Movie();
-            movie.set_id(this.getId());
-            movie.setId(Long.valueOf(this.getMovieId()));
-            //only favourited movies are in the database
-            movie.setFavorited(true);
-            movie.setOriginalTitle(this.getOriginalTitle());
-            movie.setOverview(this.getOverview());
-            movie.setPosterPath(this.getPosterPath());
-            movie.setTitle(this.getTitle());
-            double vote_average = 0.0;
-            String voteAverage = this.getVoteAverage();
-            if(voteAverage != null && voteAverage.trim().length() > 0){
-                vote_average = Double.valueOf(voteAverage);
-            }
-            movie.setVoteAverage(vote_average);
-            movie.setReleaseDate(this.getReleaseDate());
-            return movie;
+            return getMovie();
         }
         return null;
     }

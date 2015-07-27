@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.kinwae.popularmovies.data.Trailer;
 import com.kinwae.popularmovies.provider.base.AbstractCursor;
 
 /**
@@ -54,5 +55,10 @@ public class DbTrailerCursor extends AbstractCursor implements DbTrailerModel {
     public String getYoutubeId() {
         String res = getStringOrNull(DbTrailerColumns.YOUTUBE_ID);
         return res;
+    }
+
+    public Trailer getTrailer(){
+        Trailer trailer = new Trailer(getName(), getYoutubeId());
+        return trailer;
     }
 }

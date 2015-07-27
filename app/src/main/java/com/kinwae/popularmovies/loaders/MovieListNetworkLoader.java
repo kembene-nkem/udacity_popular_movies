@@ -1,15 +1,22 @@
 package com.kinwae.popularmovies.loaders;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.events.MovieListRefreshRequiredEvent;
+import com.kinwae.popularmovies.loaders.delegates.NetworkLoaderDelegate;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieColumns;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieCursor;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieSelection;
 import com.kinwae.popularmovies.util.Utility;
 import com.kinwae.popularmovies.views.adapters.MoviePaginator;
-import com.kinwae.popularmovies.views.bus.MovieListManager;
 import com.squareup.otto.Subscribe;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -23,42 +30,66 @@ import java.util.List;
  * lifespan of the activity itself) so they get associated with a paginator via the DefaultMovieListManager
  * Created by Kembene on 6/27/2015.
  */
-public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
+public class MovieListNetworkLoader extends AsyncTaskLoader<MovieLoaderDataProvider>{
 
-    List<Movie> mMovieList;
     UpdateListObserver mObserver;
     int mPagerPosition;
     MoviePaginator mMoviePaginator;
+    MovieLoaderDataProvider mMovieProvider;
 
-
-    public MovieListNetworkLoader(Context context, MoviePaginator mMoviePaginator) {
-        this(context, 1, mMoviePaginator);
+    public MovieListNetworkLoader(Context context) {
+        this(context, 1);
     }
 
-    public MovieListNetworkLoader(Context context, int pageNumber, MoviePaginator mMoviePaginator) {
-        this(context, pageNumber, mMoviePaginator, null);
-    }
-
-    public MovieListNetworkLoader(Context context, int page, MoviePaginator mMoviePaginator, List<Movie> movies) {
+    public MovieListNetworkLoader(Context context, int pageNumber) {
         super(context);
-        this.mMovieList = movies;
-        this.mPagerPosition = page;
-        this.mMoviePaginator = mMoviePaginator;
+        this.mPagerPosition = pageNumber;
+        this.mMoviePaginator = new MoviePaginator();
     }
 
-    public MovieListNetworkLoader setMoviePaginator(MoviePaginator moviePaginator) {
-        this.mMoviePaginator = moviePaginator;
-        return this;
-    }
 
     @Override
-    public List<Movie> loadInBackground() {
+    public MovieLoaderDataProvider loadInBackground() {
         /**
          * we delegate the loading of movies for the specified page to the MoviePaginator who
          * either makes a network call or returns a cached copy
          */
         String sortOrder = Utility.getPreferredMovieSortOrder(getContext());
-        return mMoviePaginator.getMovies(mPagerPosition, sortOrder);
+        List<Movie> movies = mMoviePaginator.getMovies(mPagerPosition, sortOrder);
+
+        //keep a map of movie_ids to index position
+        HashMap<Long, Integer> movieIdMap = new HashMap<>();
+        String[] movieIds = new String[movies.size()];
+        for(int i=0; i < movies.size(); i++){
+            Movie movie = movies.get(i);
+            movieIds[i] = Long.toString(movie.getId());
+            movieIdMap.put(movie.getId(), i);
+        }
+
+        DbMovieSelection where = new DbMovieSelection();
+        where.movieIdContains(movieIds);
+        ContentResolver contentResolver = getContext().getContentResolver();
+        String sel = where.sel();
+        Log.i(MovieListNetworkLoader.class.getName(), sel);
+        Cursor cursor = contentResolver.query(DbMovieColumns.CONTENT_URI, new String[]{"movie_id"}, sel, where.args(), null);
+        DbMovieCursor movieCursor = new DbMovieCursor(cursor);
+        while (movieCursor.moveToNext()){
+            Long movieId = Long.valueOf(movieCursor.getMovieId());
+            Integer index = movieIdMap.get(movieId);
+            if(index != null){
+                movies.get(index).setFavorited(true);
+            }
+        }
+        movieCursor.close();
+
+        NetworkLoaderDelegate delegate = new NetworkLoaderDelegate();
+        MovieLoaderDataProvider movieProvider = new MovieLoaderDataProvider(delegate,
+                MovieLoaderDataProvider.LOADER_TYPE_NETWORK);
+
+        delegate.setPageCount(mMoviePaginator.getNumberOfPages());
+        delegate.setMovieList(movies);
+
+        return movieProvider;
     }
 
     /**
@@ -66,7 +97,7 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
      * super class will take care of delivering it; the implementation
      * here just adds a little more logic.
      */
-    @Override public void deliverResult(List<Movie> movies) {
+    @Override public void deliverResult(MovieLoaderDataProvider movies) {
         if (isReset()) {
             // An async query came in while the loader is stopped.  We
             // don't need the result.
@@ -76,8 +107,8 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
             return;
         }
 
-        List<Movie> oldMovies = movies;
-        mMovieList = movies;
+        MovieLoaderDataProvider oldMovies = this.mMovieProvider;
+        this.mMovieProvider = movies;
 
         if (isStarted()) {
             // If the Loader is currently started, we can immediately
@@ -103,8 +134,8 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
     @Override
     protected void onStartLoading() {
         //if a movielist was initially sent in, deliver the result straight to the client
-        if (mMovieList != null) {
-            deliverResult(mMovieList);
+        if (this.mMovieProvider != null) {
+            deliverResult(this.mMovieProvider);
         }
 
         // start watching for changes made on shared preferences
@@ -114,7 +145,7 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
         }
 
         // if movielist is null or if content has changed (in our case, setting preference has changed)
-        if (takeContentChanged() || mMovieList == null) {
+        if (takeContentChanged() || this.mMovieProvider == null) {
             forceLoad();
         }
     }
@@ -129,7 +160,7 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
     }
 
     @Override
-    public void onCanceled(List<Movie> movieList) {
+    public void onCanceled(MovieLoaderDataProvider movieList) {
         super.onCanceled(movieList);
 
         // At this point we can release the resources associated with 'apps'
@@ -143,9 +174,9 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
         onStopLoading();
 
         // At this point we can release the resources associated with 'mData'.
-        if (mMovieList != null) {
-            onReleaseResources(mMovieList);
-            mMovieList = null;
+        if (this.mMovieProvider != null) {
+            onReleaseResources(this.mMovieProvider);
+            this.mMovieProvider = null;
         }
 
         // The Loader is being reset, so we should stop monitoring for changes.
@@ -159,7 +190,7 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
      * Helper function to take care of releasing resources associated
      * with an actively loaded data set.
      */
-    protected void onReleaseResources(List<Movie> movies) {
+    protected void onReleaseResources(MovieLoaderDataProvider movies) {
         // For a simple List<> there is nothing to do.  For something
         // like a Cursor, we would close it here.
     }
@@ -168,6 +199,9 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<List<Movie>>{
 
         @Subscribe
         public void movieListRequiredEvent(MovieListRefreshRequiredEvent event){
+            if(mMoviePaginator != null){
+                mMoviePaginator.resetCache();
+            }
             onContentChanged();
         }
 

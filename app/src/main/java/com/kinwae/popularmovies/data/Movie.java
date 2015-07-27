@@ -1,6 +1,8 @@
 package com.kinwae.popularmovies.data;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.format.DateFormat;
@@ -8,6 +10,12 @@ import android.util.Log;
 
 import com.kinwae.popularmovies.events.MovieDetailLoadedEvent;
 import com.kinwae.popularmovies.net.NetworkRequest;
+import com.kinwae.popularmovies.provider.dbreview.DbReviewColumns;
+import com.kinwae.popularmovies.provider.dbreview.DbReviewCursor;
+import com.kinwae.popularmovies.provider.dbreview.DbReviewSelection;
+import com.kinwae.popularmovies.provider.dbtrailer.DbTrailerColumns;
+import com.kinwae.popularmovies.provider.dbtrailer.DbTrailerCursor;
+import com.kinwae.popularmovies.provider.dbtrailer.DbTrailerSelection;
 import com.kinwae.popularmovies.util.Utility;
 import com.squareup.otto.Bus;
 
@@ -206,29 +214,89 @@ public class Movie implements Parcelable {
      * main thread after the data has been loaded successfully
      * @param callback
      */
-    public void loadMovieDetails(final MovieDetailLoadCallback callback){
+    public void loadMovieDetails(final MovieDetailLoadCallback callback, final Context context){
         if(loadedExtra){
-            callback.movieDetailsLoaded(this);
+            if(callback != null)
+                callback.movieDetailsLoaded(this);
             return;
         }
         else{
             // check if we can gather the details from the database. This only happen if the user
             // has favourited the movie
-            NetworkRequest.getRestService().getMovieDetail(this.getId(), "trailers,reviews",
-                    new Callback<MovieDetailResponse>() {
+            if(isFavorited()){
+                if(context != null){
+                    AsyncTask<Movie, Void, MovieDetailResponse> asyncTask = new AsyncTask<Movie, Void, MovieDetailResponse>() {
+
                         @Override
-                        public void success(MovieDetailResponse movieDetailResponse, Response response) {
-                            movieDetailContentReceived(movieDetailResponse);
-                            callback.movieDetailsLoaded(Movie.this);
-                            Utility.getSharedEventBus().post(new MovieDetailLoadedEvent(Movie.this));
+                        protected MovieDetailResponse doInBackground(Movie... params) {
+                            Movie movie = params[0];
+                            DbTrailerSelection trailerWhere = new DbTrailerSelection();
+                            List<MovieReview> reviews = new ArrayList<>();
+                            List<Trailer> trailers = new ArrayList<>();
+
+                            trailerWhere.movieId(Long.toString(movie.getId()));
+                            Cursor cursor = context.getContentResolver().query(DbTrailerColumns.CONTENT_URI, null,
+                                    trailerWhere.sel(), trailerWhere.args(), null);
+                            DbTrailerCursor  trailerCursor = new DbTrailerCursor(cursor);
+
+                            while (trailerCursor.moveToNext()){
+                                trailers.add(trailerCursor.getTrailer());
+                            }
+                            trailerCursor.close();
+
+                            DbReviewSelection reviewWhere = new DbReviewSelection();
+                            reviewWhere.movieId(Long.toString(movie.getId()));
+                            cursor = context.getContentResolver().query(DbReviewColumns.CONTENT_URI, null,
+                                    reviewWhere.sel(), reviewWhere.args(), null);
+                            DbReviewCursor reviewCursor = new DbReviewCursor(cursor);
+
+                            while (reviewCursor.moveToNext()){
+                                reviews.add(reviewCursor.getMovieReview());
+                            }
+                            reviewCursor.close();
+
+                            MovieDetailResponse response = new MovieDetailResponse();
+                            MovieDetailResponse.MovieReviewWrapper reviewWrapper = new MovieDetailResponse.MovieReviewWrapper();
+                            reviewWrapper.setResults(reviews);
+                            MovieDetailResponse.MovieTrailersWrapper trailersWrapper = new MovieDetailResponse.MovieTrailersWrapper();
+                            trailersWrapper.setYoutube(trailers);
+                            response.setReviews(reviewWrapper);
+                            response.setTrailers(trailersWrapper);
+
+                            return response;
                         }
 
                         @Override
-                        public void failure(RetrofitError error) {
-                            //we don't do anything on failure
+                        protected void onPostExecute(MovieDetailResponse detailResponse) {
+                            if(detailResponse != null){
+                                movieDetailContentReceived(detailResponse);
+                                if(callback != null)
+                                    callback.movieDetailsLoaded(Movie.this);
+                                Utility.getSharedEventBus().post(new MovieDetailLoadedEvent(Movie.this));
+                            }
                         }
-                    }
-            );
+                    };
+                    asyncTask.execute(this);
+                }
+            }
+            else{
+                NetworkRequest.getRestService().getMovieDetail(this.getId(), "trailers,reviews",
+                        new Callback<MovieDetailResponse>() {
+                            @Override
+                            public void success(MovieDetailResponse movieDetailResponse, Response response) {
+                                movieDetailContentReceived(movieDetailResponse);
+                                if(callback != null)
+                                    callback.movieDetailsLoaded(Movie.this);
+                                Utility.getSharedEventBus().post(new MovieDetailLoadedEvent(Movie.this));
+                            }
+
+                            @Override
+                            public void failure(RetrofitError error) {
+                                //we don't do anything on failure
+                            }
+                        }
+                );
+            }
         }
     }
 

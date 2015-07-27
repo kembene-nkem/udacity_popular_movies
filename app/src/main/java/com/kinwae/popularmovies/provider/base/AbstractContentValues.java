@@ -37,4 +37,8 @@ public abstract class AbstractContentValues {
     public Uri insert(Context context) {
         return context.getContentResolver().insert(uri(), values());
     }
+
+    public int bulkInsert(ContentResolver contentResolver, ContentValues[] values){
+        return contentResolver.bulkInsert(uri(), values);
+    }
 }

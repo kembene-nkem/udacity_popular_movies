@@ -18,8 +18,11 @@ import com.google.gson.stream.JsonWriter;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.data.MovieRequestResponse;
 import com.kinwae.popularmovies.events.MovieDetailLoadedEvent;
+import com.kinwae.popularmovies.events.MovieListRefreshRequiredEvent;
 import com.kinwae.popularmovies.net.NetworkRequest;
+import com.kinwae.popularmovies.provider.dbmovie.DbMovieSelection;
 import com.kinwae.popularmovies.services.MovieService;
+import com.kinwae.popularmovies.util.Utility;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.otto.Subscribe;
 
@@ -29,6 +32,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -59,8 +63,6 @@ public class MoviePaginator {
     private ArrayList<MovieRequestResponse> mCache = new ArrayList<>();
 
     public MoviePaginator() {
-
-
     }
 
     /**
@@ -83,7 +85,9 @@ public class MoviePaginator {
             try{
                 //We don't have a cache of this response, so lets request it
                 decodeResponse = NetworkRequest.getRestService().getMovies(sortOrder, page);
-                this.numberOfPages = decodeResponse.getTotalPages();
+                if(this.numberOfPages == 1){
+                    this.numberOfPages = decodeResponse.getTotalPages();
+                }
             }
             catch(RetrofitError ex){
                 Log.v(LOGGER, ex.getMessage());
@@ -116,10 +120,6 @@ public class MoviePaginator {
 
     public int getNumberOfPages() {
         return numberOfPages;
-    }
-
-    public int getItemsPerPage() {
-        return itemsPerPage;
     }
 
 

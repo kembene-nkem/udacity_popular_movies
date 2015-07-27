@@ -2,13 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:background="@color/background_material_light"
     tools:context="com.kinwae.popularmovies.views.fragments.MovieDetailFragment">
-    <!--
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    -->
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -19,6 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="170dp"
             android:paddingEnd="16dp"
+            android:paddingStart="0dp"
             android:elevation="4dp">
             <TextView tools:text="This an Original"
                 android:id="@+id/movie_detail_title"
@@ -57,19 +53,6 @@
                 android:fontFamily="sans-serif-light"
                 android:drawableEnd="@drawable/rating"/>
 
-            <!--<LinearLayout
-                android:layout_width="wrap_content"
-                android:orientation="horizontal"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/rating"
-                    android:contentDescription="@string/movie_rating_desc"
-                    />
-            </LinearLayout>-->
-
         </LinearLayout>
 
         <FrameLayout
@@ -91,8 +74,8 @@
                 tools:src="@drawable/poster_placeholder"/>
             <ImageButton
                 android:id="@+id/rate_button"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_margin="16dp"
                 android:layout_gravity="end"
                 android:elevation="7dp"
@@ -103,7 +86,6 @@
                 android:background="@drawable/rating_button_background"
                 android:contentDescription="@string/rate_now_desc"/>
         </FrameLayout>
-
     </FrameLayout>
     <TextView
         android:id="@+id/movie_detail_plot"

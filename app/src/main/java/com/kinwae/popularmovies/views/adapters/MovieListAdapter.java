@@ -11,8 +11,10 @@ import android.widget.TextView;
 
 import com.kinwae.popularmovies.R;
 import com.kinwae.popularmovies.data.Movie;
+import com.kinwae.popularmovies.events.MovieCursorChangeEvent;
 import com.kinwae.popularmovies.events.MovieDetailLoadedEvent;
 import com.kinwae.popularmovies.events.MovieFavoritedEvent;
+import com.kinwae.popularmovies.loaders.MovieLoaderDataProvider;
 import com.kinwae.popularmovies.util.ImageSize;
 import com.kinwae.popularmovies.util.Utility;
 import com.squareup.otto.Subscribe;
@@ -29,7 +31,7 @@ import java.util.Map;
  */
 public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.ViewHolder>{
 
-    private List<Movie> mMovieList;
+    private MovieLoaderDataProvider mMovieList;
     private Map<Long, Integer> movieIndexes = new HashMap<>();
 
     private static final String LOG_TAG = MovieListAdapter.class.getName();
@@ -38,26 +40,24 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.View
         Utility.getSharedEventBus().register(this);
     }
 
-    public MovieListAdapter(List<Movie> movieList) {
+    public MovieListAdapter(MovieLoaderDataProvider movieList) {
         this.mMovieList = movieList;
         Utility.getSharedEventBus().register(this);
     }
 
-    public void updateMovies(List<Movie> movies){
-        List<Movie> oldSet = this.mMovieList;
+    public void updateDataProvider(MovieLoaderDataProvider movies){
+        MovieLoaderDataProvider oldSet = this.mMovieList;
         if(movies != this.mMovieList){
             this.mMovieList = movies;
             this.notifyDataSetChanged();
         }
     }
 
-    public List<Movie> getMovies(){
-        return this.mMovieList;
-    }
 
     public Movie getMovieAtPosition(int position){
-        if(this.mMovieList != null && position < this.mMovieList.size()){
-            return mMovieList.get(position);
+        if(this.mMovieList != null){
+            Movie movie = mMovieList.getMovieAt(position);
+            return movie;
         }
         return null;
     }
@@ -74,35 +74,40 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        if(mMovieList != null && position < mMovieList.size()){
-            Movie movie = mMovieList.get(position);
-            movieIndexes.put(movie.getId(), position);
-            RequestCreator picassoCreator = null;
-            if(movie.getPosterPath() == null){
-                Log.v(LOG_TAG, "No poster for movie: " + movie.getTitle());
-                picassoCreator = Picasso.with(holder.context)
-                        .load(R.drawable.poster_placeholder);
+        if(mMovieList != null){
+            Movie movie = mMovieList.getMovieAt(position);
+            if(!movie.isLoadedExtra()){
+                movie.loadMovieDetails(null, holder.context);
             }
-            else{
-                String posterURL = Utility.getPosterURL(ImageSize.DEFAULT, movie.getPosterPath());
-                Log.v(LOG_TAG, "Fetching poster image from: " + posterURL + " for movie: " + movie.getTitle());
-                picassoCreator = Picasso.with(holder.context)
-                        .load(posterURL);
+            if(movie != null){
+                movieIndexes.put(movie.getId(), position);
+                RequestCreator picassoCreator = null;
+                if(movie.getPosterPath() == null){
+                    Log.v(LOG_TAG, "No poster for movie: " + movie.getTitle());
+                    picassoCreator = Picasso.with(holder.context)
+                            .load(R.drawable.poster_placeholder);
+                }
+                else{
+                    String posterURL = Utility.getPosterURL(ImageSize.DEFAULT, movie.getPosterPath());
+                    Log.v(LOG_TAG, "Fetching poster image from: " + posterURL + " for movie: " + movie.getTitle());
+                    picassoCreator = Picasso.with(holder.context)
+                            .load(posterURL);
+                }
+                picassoCreator
+                        .placeholder(R.drawable.poster_placeholder)
+                        .error(R.drawable.poster_placeholder).fit()
+                        //.centerCrop()
+                        .into(holder.mPosterView);
+                holder.mPosterView.setContentDescription(movie.getTitle());
+                holder.titleView.setText(movie.getTitle());
             }
-            picassoCreator
-                    .placeholder(R.drawable.poster_placeholder)
-                    .error(R.drawable.poster_placeholder).fit()
-                    //.centerCrop()
-                    .into(holder.mPosterView);
-            holder.mPosterView.setContentDescription(movie.getTitle());
-            holder.titleView.setText(movie.getTitle());
         }
 
     }
 
     @Override
     public int getItemCount() {
-        return mMovieList != null ? mMovieList.size() : 0;
+        return mMovieList != null ? mMovieList.getItemsCount() : 0;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
@@ -129,7 +134,9 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.View
             Integer mIndex = movieIndexes.get(movie.getId());
             if(mIndex != null){
                 Movie movieAtPosition = getMovieAtPosition(mIndex);
-                movieAtPosition.setFavorited(movie.isFavorited());
+                if(movieAtPosition != null){
+                    movieAtPosition.setFavorited(movie.isFavorited());
+                }
             }
         }
     }
@@ -148,5 +155,10 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.View
                 }
             }
         }
+    }
+
+    @Subscribe
+    public void movieCursorChangeEventListener(MovieCursorChangeEvent event){
+        notifyDataSetChanged();
     }
 }

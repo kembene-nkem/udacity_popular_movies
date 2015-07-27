@@ -1,15 +1,47 @@
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <android.support.v7.widget.RecyclerView
+        android:visibility="gone"
         android:id="@+id/movie_details_listing_wrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="56dp"
         android:scrollbars="vertical">
 
     </android.support.v7.widget.RecyclerView>
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/tap_to_show_details"
+        android:text="@string/movie_detail_tap_required_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_margin="70dp"
+        android:textColor="@color/primary_text"
+        android:textAppearance="?android:textAppearanceMedium"
+        android:fontFamily="sans-serif-condensed"/>
+
+    <ImageButton
+        android:contentDescription="@string/play_trailer_content_description"
+        android:id="@+id/play_trailer_button"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="24dp"
+        android:elevation="4dp"
+        android:paddingStart="13dp"
+        android:paddingEnd="10dp"
+        android:scaleType="fitCenter"
+        android:layout_gravity="bottom|end"
+        android:src="@android:drawable/ic_media_play"
+        style="?android:attr/borderlessButtonStyle"
+        android:background="@drawable/rating_button_background"
+        android:visibility="gone"/>
+
+</FrameLayout>
