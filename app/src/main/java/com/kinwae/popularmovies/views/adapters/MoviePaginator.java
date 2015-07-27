@@ -2,46 +2,14 @@ package com.kinwae.popularmovies.views.adapters;
 
 import android.util.Log;
 
-import com.facebook.stetho.okhttp.StethoInterceptor;
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
-import com.google.gson.internal.bind.DateTypeAdapter;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.data.MovieRequestResponse;
-import com.kinwae.popularmovies.events.MovieDetailLoadedEvent;
-import com.kinwae.popularmovies.events.MovieListRefreshRequiredEvent;
 import com.kinwae.popularmovies.net.NetworkRequest;
-import com.kinwae.popularmovies.provider.dbmovie.DbMovieSelection;
-import com.kinwae.popularmovies.services.MovieService;
-import com.kinwae.popularmovies.util.Utility;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.otto.Subscribe;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
-import retrofit.RequestInterceptor;
-import retrofit.RestAdapter;
 import retrofit.RetrofitError;
-import retrofit.client.OkClient;
-import retrofit.converter.GsonConverter;
 
 /**
  * A paginator is responsible for doing the actual loading of movies for a particular page. It either makes

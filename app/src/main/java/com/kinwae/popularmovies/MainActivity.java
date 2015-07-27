@@ -9,7 +9,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import com.facebook.stetho.Stetho;
 import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.events.MovieFavoritedEvent;
 import com.kinwae.popularmovies.util.Utility;
@@ -52,13 +51,13 @@ public class MainActivity extends AppCompatActivity
         mCurrentSorting = Utility.getPreferredMovieSortOrder(this);
 
         //todo provide integration to chrome debugger. Remove on production
-        Stetho.initialize(
+        /*Stetho.initialize(
                 Stetho.newInitializerBuilder(this)
                         .enableDumpapp(
                                 Stetho.defaultDumperPluginsProvider(this))
                         .enableWebKitInspector(
                                 Stetho.defaultInspectorModulesProvider(this))
-                        .build());
+                        .build());*/
 
         if(detailContainer != null){
             mTwoPane = true;
