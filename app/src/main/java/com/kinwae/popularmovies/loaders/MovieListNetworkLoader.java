@@ -66,21 +66,22 @@ public class MovieListNetworkLoader extends AsyncTaskLoader<MovieLoaderDataProvi
             movieIdMap.put(movie.getId(), i);
         }
 
-        DbMovieSelection where = new DbMovieSelection();
-        where.movieIdContains(movieIds);
-        ContentResolver contentResolver = getContext().getContentResolver();
-        String sel = where.sel();
-        Log.i(MovieListNetworkLoader.class.getName(), sel);
-        Cursor cursor = contentResolver.query(DbMovieColumns.CONTENT_URI, new String[]{"movie_id"}, sel, where.args(), null);
-        DbMovieCursor movieCursor = new DbMovieCursor(cursor);
-        while (movieCursor.moveToNext()){
-            Long movieId = Long.valueOf(movieCursor.getMovieId());
-            Integer index = movieIdMap.get(movieId);
-            if(index != null){
-                movies.get(index).setFavorited(true);
+        if(movies.size() > 0){
+            DbMovieSelection where = new DbMovieSelection();
+            where.movieIdContains(movieIds);
+            ContentResolver contentResolver = getContext().getContentResolver();
+            String sel = where.sel();
+            Cursor cursor = contentResolver.query(DbMovieColumns.CONTENT_URI, new String[]{"movie_id"}, sel, where.args(), null);
+            DbMovieCursor movieCursor = new DbMovieCursor(cursor);
+            while (movieCursor.moveToNext()){
+                Long movieId = Long.valueOf(movieCursor.getMovieId());
+                Integer index = movieIdMap.get(movieId);
+                if(index != null){
+                    movies.get(index).setFavorited(true);
+                }
             }
+            movieCursor.close();
         }
-        movieCursor.close();
 
         NetworkLoaderDelegate delegate = new NetworkLoaderDelegate();
         MovieLoaderDataProvider movieProvider = new MovieLoaderDataProvider(delegate,
