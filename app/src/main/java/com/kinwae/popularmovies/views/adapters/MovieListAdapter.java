@@ -53,6 +53,10 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.View
         }
     }
 
+    public MovieLoaderDataProvider getDataProvider(){
+        return mMovieList;
+    }
+
 
     public Movie getMovieAtPosition(int position){
         if(this.mMovieList != null){

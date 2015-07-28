@@ -3,7 +3,6 @@ package com.kinwae.popularmovies.util;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.widget.ImageButton;
@@ -37,6 +36,7 @@ public class Utility {
 
     public static final int SORT_CATEGORY_NETWORK = 1;
     public static final int SORT_CATEGORY_CURSOR = 2;
+    private static int totalMoviePageFromNetwork = 1;
 
     public static String getPreferredMovieSortOrder(Context context){
         SharedPreferences prefManager = PreferenceManager.getDefaultSharedPreferences(context);
@@ -45,6 +45,14 @@ public class Utility {
                 context.getString(R.string.pref_movie_sort_key),
                 defaultSort
         );
+    }
+
+    public static int getTotalMoviePageFromNetwork(){
+        return totalMoviePageFromNetwork;
+    }
+
+    public static void setTotalMoviePageFromNetwork(int pagesCount){
+        totalMoviePageFromNetwork = pagesCount;
     }
 
     public static int getPreferredGridColumns(Context context){

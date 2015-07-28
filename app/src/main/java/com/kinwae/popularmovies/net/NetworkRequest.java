@@ -4,6 +4,7 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.kinwae.popularmovies.services.MovieService;
+import com.kinwae.popularmovies.services.NetMock;
 import com.squareup.okhttp.OkHttpClient;
 
 import retrofit.RequestInterceptor;

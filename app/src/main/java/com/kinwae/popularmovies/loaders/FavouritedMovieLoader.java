@@ -9,10 +9,13 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.widget.CursorAdapter;
 
+import com.kinwae.popularmovies.data.Movie;
 import com.kinwae.popularmovies.loaders.delegates.CursorLoaderDelegate;
 import com.kinwae.popularmovies.provider.dbmovie.DbMovieColumns;
 import com.kinwae.popularmovies.provider.dbmovie.DbMovieSelection;
 import com.kinwae.popularmovies.util.Utility;
+
+import java.util.List;
 
 /**
  * Created by Kembene on 7/26/2015.
@@ -31,8 +34,9 @@ public class FavouritedMovieLoader extends AsyncTaskLoader<MovieLoaderDataProvid
     CursorLoader cursorLoaderDelegate;
     MovieLoaderDataProvider mDataProvider;
     ContentObserver mChangeObserver;
+    List<Movie> mSavedMovies;
 
-    public FavouritedMovieLoader(Context context, DbMovieSelection selection) {
+    public FavouritedMovieLoader(Context context, DbMovieSelection selection, List<Movie> savedMovies) {
         super(context);
         this.uriSelection = selection;
         cursorLoaderDelegate = new CursorLoader(context);
@@ -41,6 +45,7 @@ public class FavouritedMovieLoader extends AsyncTaskLoader<MovieLoaderDataProvid
         // CursorLoaderDelegate so it can unregister it from its list of listeners when we are
         // freeing resources (i.e closing the associated Cursor)
         mChangeObserver = new ChangeObserver();
+        this.mSavedMovies = savedMovies;
     }
 
     @Override
@@ -57,6 +62,10 @@ public class FavouritedMovieLoader extends AsyncTaskLoader<MovieLoaderDataProvid
         Cursor cursor = cursorLoaderDelegate.loadInBackground();
         cursor.registerContentObserver(mChangeObserver);
         CursorLoaderDelegate loaderDelegate = new CursorLoaderDelegate(cursor, mChangeObserver);
+        if(mSavedMovies != null){
+            loaderDelegate.setLoadedMovieList(mSavedMovies);
+            mSavedMovies = null;
+        }
         return new MovieLoaderDataProvider(loaderDelegate);
 
     }

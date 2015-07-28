@@ -4,8 +4,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.GridLayoutManager;
@@ -26,6 +26,9 @@ import com.kinwae.popularmovies.util.Utility;
 import com.kinwae.popularmovies.views.adapters.MovieListAdapter;
 import com.kinwae.popularmovies.views.bus.RecyclerViewPosterClickListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A placeholder fragment containing a simple view.
  */
@@ -33,6 +36,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     private final static String LOG_TAG = MovieListFragment.class.getName();
     public static final String MOVIE_FRAGMENT_PAGER_BUNDLE_NAME = "frag_page";
+    public static final String MOVIE_LOADER_ID = "frag_loader";
+    public static final String MOVIE_LOADED_LIST = "frag_loaded";
+
     public final static int NETWORK_MOVIE_LIST_LOADER_ID = 0;
     public final static int CURSOR_MOVIE_LIST_LOADER_ID = 1;
     private int mLastLoaderId = -1;
@@ -47,7 +53,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     private int mPagerPosition = -1;
     private int mShortAnimationDuration;
-
+    private List<Movie> mTempMovieList;
 
 
     public static MovieListFragment newInstance(int pagerPosition) {
@@ -134,8 +140,12 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onActivityCreated(Bundle savedInstanceState) {
+        if(savedInstanceState != null){
+            ArrayList<Movie> movieList = savedInstanceState.getParcelableArrayList(MOVIE_LOADED_LIST);
+            mTempMovieList = movieList;
+
+        }
         int sortCategory = Utility.getSortCategory(getActivity(), null);
         int loaderId;
         if(sortCategory == Utility.SORT_CATEGORY_NETWORK){
@@ -145,7 +155,12 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
             loaderId = CURSOR_MOVIE_LIST_LOADER_ID;
         }
         getLoaderManager().initLoader(loaderId, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
 
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
         // This makes sure that the container activity has implemented
         // the callback interface. If not, it throws an exception
         try {
@@ -166,6 +181,14 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     public void onSaveInstanceState(Bundle outState) {
         //lets save the page this fragment loaded
         outState.putInt(MOVIE_FRAGMENT_PAGER_BUNDLE_NAME, mPagerPosition);
+        outState.putInt(MOVIE_LOADER_ID, mLastLoaderId);
+        if(mAdapter.getDataProvider() != null && mAdapter.getDataProvider().getDataDelegate() != null){
+            List<Movie> movieList = mAdapter.getDataProvider().getDataDelegate().getLoadedMovieList();
+            if(movieList != null && movieList.size() > 0){
+                outState.putParcelableArrayList(MOVIE_LOADED_LIST, new ArrayList<Parcelable>(movieList));
+            }
+        }
+
         super.onSaveInstanceState(outState);
     }
 
@@ -190,12 +213,13 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
             // depending on the category of the data we want to load (network fetched or
             // database fetched), create the appropriate loader
             if(id == NETWORK_MOVIE_LIST_LOADER_ID){
-                mMovieLoader = new MovieListNetworkLoader(getActivity(), mPagerPosition);
+                mMovieLoader = new MovieListNetworkLoader(getActivity(), mPagerPosition, mTempMovieList);
             }
             else{
                 DbMovieSelection selection = new DbMovieSelection();
-                mMovieLoader = new FavouritedMovieLoader(getActivity(), selection);
+                mMovieLoader = new FavouritedMovieLoader(getActivity(), selection, mTempMovieList);
             }
+            mTempMovieList = null;
             mLastLoaderId = id;
             return mMovieLoader;
         }

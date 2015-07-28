@@ -1,7 +1,6 @@
 package com.kinwae.popularmovies.loaders.delegates;
 
 import com.kinwae.popularmovies.data.Movie;
-import com.kinwae.popularmovies.views.adapters.MoviePaginator;
 
 import java.util.List;
 
@@ -12,16 +11,7 @@ public class NetworkLoaderDelegate implements MovieLoaderDataDelegate {
     private int pageCount;
     private int numberOfItems;
     private List<Movie> movieList;
-    private MoviePaginator paginator;
 
-    public MoviePaginator getPaginator() {
-        return paginator;
-    }
-
-    public NetworkLoaderDelegate setPaginator(MoviePaginator paginator) {
-        this.paginator = paginator;
-        return this;
-    }
 
     @Override
     public int getPageCount() {
@@ -46,7 +36,7 @@ public class NetworkLoaderDelegate implements MovieLoaderDataDelegate {
         return null;
     }
 
-    public List<Movie> getMovieList() {
+    public List<Movie> getLoadedMovieList() {
         return movieList;
     }
 

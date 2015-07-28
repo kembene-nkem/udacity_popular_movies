@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity
         mPager = (ViewPager) findViewById(R.id.pager);
         mPager.setAdapter(mPagerAdapter);
         mCurrentSorting = Utility.getPreferredMovieSortOrder(this);
-
+        Utility.getSharedEventBus().register(this);
         //todo provide integration to chrome debugger. Remove on production
         /*Stetho.initialize(
                 Stetho.newInitializerBuilder(this)
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        Utility.getSharedEventBus().register(this);
+
         String sort = Utility.getPreferredMovieSortOrder(this);
         view_type_label.setText(getSortLabel(sort));
 
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         super.onPause();
-        Utility.getSharedEventBus().unregister(this);
+        //Utility.getSharedEventBus().unregister(this);
     }
 
     @Override

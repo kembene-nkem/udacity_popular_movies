@@ -65,5 +65,19 @@ public class CursorLoaderDelegate implements MovieLoaderDataDelegate  {
         loadedMovies = null;
     }
 
+    public List<Movie> getLoadedMovieList() {
+        return new ArrayList<>(loadedMovies.values());
+    }
+
+    public void setLoadedMovieList(List<Movie> movies) {
+        loadedMovies = new HashMap<>();
+        if(movies != null){
+            for(int i=0; i<movies.size(); i++){
+                Movie movie = movies.get(i);
+                loadedMovies.put(i, movie);
+            }
+        }
+    }
+
 
 }
